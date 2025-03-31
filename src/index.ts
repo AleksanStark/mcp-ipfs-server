@@ -17,12 +17,19 @@ const server = new McpServer({
   },
 });
 
-interface IpfsResponse {
+interface IpfsAddResponse {
   Hash: string;
   Size: string;
 }
 
-async function addFileToIPFS(filePath: string): Promise<IpfsResponse | null> {
+interface IpfsPinResponse {
+  Pins: Array<string>;
+  Progress: bigint;
+}
+
+async function addFileToIPFS(
+  filePath: string
+): Promise<IpfsAddResponse | null> {
   const formData = new FormData();
 
   formData.append(
@@ -42,7 +49,7 @@ async function addFileToIPFS(filePath: string): Promise<IpfsResponse | null> {
       throw new Error(`Failed to add file to IPFS ${response.statusText}`);
     }
 
-    const data = (await response.json()) as IpfsResponse;
+    const data = (await response.json()) as IpfsAddResponse;
     return data;
   } catch (error) {
     console.error("Error adding file to IPFS");
@@ -50,12 +57,53 @@ async function addFileToIPFS(filePath: string): Promise<IpfsResponse | null> {
   }
 }
 
+async function getFileFromIpfs(cid: string): Promise<string | null> {
+  try {
+    const response = await fetch(`${IPFS_API_BASE}/cat?arg=${cid}`, {
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.statusText}`);
+    }
+
+    const data = await response.text();
+
+    return data;
+  } catch (error) {
+    console.error("Error fetching file from IPFS: ", error);
+    return null;
+  }
+}
+
+async function pinIpfsFile(cid: string): Promise<IpfsPinResponse | null> {
+  try {
+    const response = await fetch(`${IPFS_API_BASE}/pin/add?arg=${cid}`, {
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.statusText}`);
+    }
+
+    const data = (await response.json()) as IpfsPinResponse;
+
+    return data;
+  } catch (error) {
+    console.error("Error fetching file from IPFS: ", error);
+    return null;
+  }
+}
+
 server.tool(
   "upload-file",
+  "Upload a file to IPFS and get its CID.",
   {
     filePath: z
       .string()
-      .describe("Enter absolute path to ypur file (e.g. /path/to/file.txt"),
+      .describe(
+        "Enter the absolute path to your file (e.g., /path/to/file.txt)."
+      ),
   },
   async ({ filePath }) => {
     const ipfsData = await addFileToIPFS(filePath);
@@ -65,32 +113,79 @@ server.tool(
         content: [
           {
             type: "text",
-            text: "Failed to retrieve ipfs data",
+            text: "Failed to upload file to IPFS.",
           },
         ],
       };
     }
-
-    const response = ipfsData || {};
-
-    if (Object.values(response).length === 0) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: "File not found or doesn't exists",
-          },
-        ],
-      };
-    }
-
-    const alertsText = `File found and uploaded successfully ${response.Hash}, ${response.Size}`;
 
     return {
       content: [
         {
           type: "text",
-          text: alertsText,
+          text: `File uploaded successfully!\nCID: ${ipfsData.Hash}\nSize: ${ipfsData.Size} bytes`,
+        },
+      ],
+    };
+  }
+);
+
+server.tool(
+  "get-file",
+  "Retrieve a file from IPFS using its CID.",
+  {
+    cid: z.string().describe("Enter the CID of the file you want to retrieve."),
+  },
+  async ({ cid }) => {
+    const ipfsFile = await getFileFromIpfs(cid);
+
+    if (!ipfsFile || ipfsFile.trim().length === 0) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "File not found or does not exist on IPFS.",
+          },
+        ],
+      };
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: `File successfully retrieved:\n${ipfsFile}`,
+        },
+      ],
+    };
+  }
+);
+
+server.tool(
+  "pin-file",
+  "Pin a file in IPFS using it's CID",
+  {
+    cid: z.string().describe("Please enter your CID for pin a file on IPFS"),
+  },
+  async ({ cid }) => {
+    const ipfsPinFile = await pinIpfsFile(cid);
+
+    if (!ipfsPinFile) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Failed to pin file on IPFS",
+          },
+        ],
+      };
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: `The file has been successfully pinned: \n Pins: ${ipfsPinFile.Pins}`,
         },
       ],
     };
