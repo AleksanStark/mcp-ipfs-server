@@ -5,6 +5,7 @@ import * as fs from "fs";
 import * as path from "path";
 import FormData from "form-data";
 import fetch from "node-fetch";
+import { url } from "inspector";
 
 const IPFS_API_BASE = "http://3.25.111.209:5001/api/v0";
 
@@ -27,70 +28,34 @@ interface IpfsPinResponse {
   Progress: bigint;
 }
 
-async function addFileToIPFS(
-  filePath: string
-): Promise<IpfsAddResponse | null> {
-  const formData = new FormData();
-
-  formData.append(
-    "file",
-    fs.createReadStream(filePath),
-    path.basename(filePath)
-  );
-
+async function makeIpfsRequest<T>(
+  url: string,
+  method?: string,
+  headers?: HeadersInit,
+  body?: FormData
+): Promise<T | null> {
   try {
-    const response = await fetch(`${IPFS_API_BASE}/add`, {
-      method: "POST",
-      headers: formData.getHeaders(),
-      body: formData,
+    const response = await fetch(`${IPFS_API_BASE}/${url}`, {
+      method,
+      headers,
+      body,
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to add file to IPFS ${response.statusText}`);
+      throw new Error(`HTTP Error! status code: ${response.statusText}`);
     }
 
-    const data = (await response.json()) as IpfsAddResponse;
-    return data;
-  } catch (error) {
-    console.error("Error adding file to IPFS");
-    return null;
-  }
-}
+    let data;
 
-async function getFileFromIpfs(cid: string): Promise<string | null> {
-  try {
-    const response = await fetch(`${IPFS_API_BASE}/cat?arg=${cid}`, {
-      method: "POST",
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.statusText}`);
+    if (url.includes("cat")) {
+      data = (await response.text()) as T;
+      return data;
     }
 
-    const data = await response.text();
-
+    data = (await response.json()) as T;
     return data;
   } catch (error) {
-    console.error("Error fetching file from IPFS: ", error);
-    return null;
-  }
-}
-
-async function pinIpfsFile(cid: string): Promise<IpfsPinResponse | null> {
-  try {
-    const response = await fetch(`${IPFS_API_BASE}/pin/add?arg=${cid}`, {
-      method: "POST",
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.statusText}`);
-    }
-
-    const data = (await response.json()) as IpfsPinResponse;
-
-    return data;
-  } catch (error) {
-    console.error("Error fetching file from IPFS: ", error);
+    console.error("Failed to retrive data");
     return null;
   }
 }
@@ -106,7 +71,20 @@ server.tool(
       ),
   },
   async ({ filePath }) => {
-    const ipfsData = await addFileToIPFS(filePath);
+    const formData = new FormData();
+
+    formData.append(
+      "file",
+      fs.createReadStream(filePath),
+      path.basename(filePath)
+    );
+
+    const ipfsData = await makeIpfsRequest<IpfsAddResponse>(
+      "add",
+      "POST",
+      formData.getHeaders(),
+      formData
+    );
 
     if (!ipfsData) {
       return {
@@ -137,7 +115,7 @@ server.tool(
     cid: z.string().describe("Enter the CID of the file you want to retrieve."),
   },
   async ({ cid }) => {
-    const ipfsFile = await getFileFromIpfs(cid);
+    const ipfsFile = await makeIpfsRequest<string>(`cat?arg=${cid}`, "POST");
 
     if (!ipfsFile || ipfsFile.trim().length === 0) {
       return {
@@ -168,7 +146,10 @@ server.tool(
     cid: z.string().describe("Please enter your CID for pin a file on IPFS"),
   },
   async ({ cid }) => {
-    const ipfsPinFile = await pinIpfsFile(cid);
+    const ipfsPinFile = await makeIpfsRequest<IpfsPinResponse>(
+      `pin/add?arg=${cid}`,
+      "POST"
+    );
 
     if (!ipfsPinFile) {
       return {
