@@ -1,14 +1,10 @@
-import {
-  McpServer,
-  ToolCallback,
-} from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { record, z } from "zod";
+import { z } from "zod";
 import * as fs from "fs";
 import * as path from "path";
 import FormData from "form-data";
 import fetch from "node-fetch";
-import { text } from "stream/consumers";
 
 const IPFS_API_BASE = "http://3.25.111.209:5001/api/v0";
 
@@ -29,6 +25,10 @@ interface IpfsAddResponse {
 interface IpfsPinResponse {
   Pins: Array<string>;
   Progress: bigint;
+}
+
+interface IpfsUnpinResponse {
+  Pins: Array<string>;
 }
 
 interface IpfsObject {
@@ -53,7 +53,7 @@ interface IpfsLsResponse {
 async function makeIpfsRequest<T>(
   url: string,
   method?: "POST" | "GET" | "PUT" | "DELETE",
-  type?: "text" | "json",
+  type?: "json" | "text",
   headers?: HeadersInit,
   body?: FormData
 ): Promise<T | null> {
@@ -251,26 +251,25 @@ server.tool(
 );
 
 server.tool(
-  "remove-file",
-  "Delete a file from IPFS",
+  "unpin-file",
+  "Unpin a file from IPFS",
   {
-    filePath: z
+    cid: z
       .string()
-      .describe("Please enter the CID to delete the file from ipfs"),
+      .describe("Please enter the CID to unpin the file from ipfs"),
   },
-  async ({ filePath }) => {
-    const result = await makeIpfsRequest<string>(
-      `files/rm?arg=${filePath}`,
-      "POST",
-      "text"
+  async ({ cid }) => {
+    const ipfsFile = await makeIpfsRequest<IpfsUnpinResponse>(
+      `pin/rm?arg=${cid}`,
+      "POST"
     );
 
-    if (!result) {
+    if (!ipfsFile) {
       return {
         content: [
           {
             type: "text",
-            text: "Failed to remove file",
+            text: "Failed to unpin file",
           },
         ],
       };
@@ -280,7 +279,7 @@ server.tool(
       content: [
         {
           type: "text",
-          text: result,
+          text: `${ipfsFile}`,
         },
       ],
     };
