@@ -224,17 +224,16 @@ server.tool(
     }
 
     const formattedIpfsFolderList = ipfsFolderList.Objects.flatMap((item) =>
-      item.Links.map(
-        (link) =>
-          [
-            `Hash: ${link.Hash}`,
-            `ModTime: ${link.ModTime}`,
-            `Mode: ${link.Mode}`,
-            `Name: ${link.Name}`,
-            `Size: ${link.Size}`,
-            `Target: ${link.Target}`,
-            `Type: ${link.Type}`,
-          ].join
+      item.Links.map((link) =>
+        [
+          `Hash: ${link.Hash}`,
+          `ModTime: ${link.ModTime}`,
+          `Mode: ${link.Mode}`,
+          `Name: ${link.Name}`,
+          `Size: ${link.Size}`,
+          `Target: ${link.Target}`,
+          `Type: ${link.Type}`,
+        ].join("\n")
       )
     );
 
