@@ -105,7 +105,7 @@ server.tool(
     const ipfsData = await makeIpfsRequest<IpfsAddResponse>(
       "add",
       "POST",
-      "text",
+      "json",
 
       formData.getHeaders(),
       formData
