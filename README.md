@@ -1,35 +1,130 @@
-MCP Server
+# MCP Server
 
-1. What is MCP (Model Context Protocol)?
+## 1. What is MCP (Model Context Protocol)?
 
-Model Context Protocol (MCP) is a standard for interaction between models, agents, and contextual data. It is developed and maintained by the community. More details can be found in the official repository: MCP GitHub.
+Model Context Protocol (MCP) is a standard for interaction between models, agents, and contextual data. It is developed and maintained by the community. More details can be found in the official repository: [MCP GitHub](https://github.com/modelcontextprotocol).
 
-2. What is IPFS?
+## 2. What is IPFS?
 
-InterPlanetary File System (IPFS) is a distributed file system that enables decentralized data storage and sharing. It is used in MCP for storing and interacting with data, ensuring reliability and fault tolerance.
+[InterPlanetary File System (IPFS)](https://ipfs.tech/) is a distributed file system that enables decentralized data storage and sharing. It is used in MCP for storing and interacting with data, ensuring reliability and fault tolerance.
 
-Deployed IPFS
+### Deployed IPFS
 
-A pre-deployed IPFS instance is available at: http://3.25.111.209:5001/. Installing a local IPFS instance is not required.
+A pre-deployed IPFS instance is available at: [http://3.25.111.209:5001/webui](http://3.25.111.209:5001/webui). Installing a local IPFS instance is not required.
 
-3. MCP Server Architecture Overview
+## 3. MCP Server Architecture Overview
 
-Components:
+### Components:
 
-MCP Node — the core server component that processes MCP requests.
+- **MCP Node** — the core server component that processes MCP requests.
+- **IPFS** — a decentralized storage system for handling content.
+- **Client** — interacts with the MCP server to send and receive data.
+- **Claude AI** — used for processing and enhancing MCP interactions.
 
-IPFS — a decentralized storage system for handling content.
+### Component Interaction:
 
-Client — interacts with the MCP server to send and receive data.
+1. The client sends a request to the MCP node.
+2. The MCP node processes the request and interacts with IPFS if necessary.
+3. Claude AI assists in processing and optimizing responses.
+4. The response is returned to the client.
 
-Claude AI — used for processing and enhancing MCP interactions.
+## 4. Deploying the MCP Server
 
-Component Interaction:
+### Requirements:
 
-The client sends a request to the MCP node.
+- Node.js (recommended version 18+)
+- NPM or Yarn
 
-The MCP node processes the request and interacts with IPFS if necessary.
+### Installation
 
-Claude AI assists in processing and optimizing responses.
+Installation will depend on whether you are using Claude Code or Claude Desktop
 
-The response is returned to the client.
+**Claude Code**
+
+Run `claude mcp add` and follow the prompts with the following information:
+
+```
+Server Name: mcp-ipfs
+Server Command: node
+Command Arguments: node /ABSOLUTE/PATH/TO/PARENT/FOLDER/mcp-ipfs-server/build/index.js
+```
+
+**Claude Desktop**
+
+Add the following config to `claude_desktop_config.json`
+
+```json
+  {
+  "mcpServers": {
+    "ipfs-mcp": {
+      "command": "node",
+      "args": [
+        "/Absolute/path/to/mcp-ipfs-server/build/index.js"
+      ]
+    }
+  }
+}
+```
+
+### Automated Installation
+
+Use the following bash script to automate the server deployment:
+
+```bash
+#!/bin/bash
+
+# Check and install Node.js and NPM if not installed
+echo "Checking Node.js and NPM..."
+if ! command -v node &> /dev/null
+then
+    echo "Node.js not found. Installing..."
+    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+    sudo apt install -y nodejs
+fi
+
+# Clone the MCP server repository
+git clone https://github.com/your-repo/mcp-server.git
+cd mcp-server
+
+# Install dependencies
+npm install
+
+# Build the project
+npm run build
+```
+
+### Usage
+
+To start using the MCP start up Claude Code with the command `claude` or start Claude Desktop. Below are the available operations:
+
+## File Operations
+
+- **upload-file** to IPFS
+- **get-file** by CID
+- **pin-file** by CID
+- **list-folder** get list of directory by CID
+- **unpin-file-** by CID
+
+
+## Example Prompts for Claude
+
+Here are some examples of how to instruct Claude to use pinata-mcp:
+
+```
+Upload an image to IPFS:
+"Please upload the file at ~/Pictures/example.jpg to my Pinata account as a private file named 'My Example Image'"
+
+Get a file from IPFS:
+"Get the file from IPFS using the CID""
+
+Pin a file to IPFS:
+"Pin the file by it's CID"
+
+Unpin a file to IPFS:
+"Unpin the file based on the CID"
+```
+
+## Questions
+
+Send us an [email](mailto:kadzutostark@gmail.com) with any issues you may encounter!
+
