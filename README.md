@@ -73,18 +73,9 @@ Use the following bash script to automate the server deployment:
 ```bash
 #!/bin/bash
 
-# Check and install Node.js and NPM if not installed
-echo "Checking Node.js and NPM..."
-if ! command -v node &> /dev/null
-then
-    echo "Node.js not found. Installing..."
-    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-    sudo apt install -y nodejs
-fi
-
 # Clone the MCP server repository
-git clone https://github.com/your-repo/mcp-server.git
-cd mcp-server
+git clone https://github.com/AleksanStark/mcp-ipfs-server.git
+cd mcp-ipfs-server
 
 # Install dependencies
 npm install
