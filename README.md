@@ -99,7 +99,7 @@ To start using the MCP start up Claude Code with the command `claude` or start C
 
 ## Example Prompts for Claude
 
-Here are some examples of how to instruct Claude to use pinata-mcp:
+Here are some examples of how to instruct Claude to use ipfs-mcp:
 
 ```
 Upload an image to IPFS:
