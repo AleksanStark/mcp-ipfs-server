@@ -8,10 +8,6 @@ Model Context Protocol (MCP) is a standard for interaction between models, agent
 
 [InterPlanetary File System (IPFS)](https://ipfs.tech/) is a distributed file system that enables decentralized data storage and sharing. It is used in MCP for storing and interacting with data, ensuring reliability and fault tolerance.
 
-### Deployed IPFS
-
-A pre-deployed IPFS instance is available at: [http://3.25.111.209:5001/webui](http://3.25.111.209:5001/webui). Installing a local IPFS instance is not required.
-
 ## 3. MCP Server Architecture Overview
 
 ### Components:
@@ -66,12 +62,37 @@ Add the following config to `claude_desktop_config.json`
 }
 ```
 
-### Automated Installation
+### Automated Installation And Deployment
 
 Use the following bash script to automate the server deployment:
 
 ```bash
 #!/bin/bash
+
+sudo apt update
+sudo apt install -y wget tar git npm
+
+wget https://github.com/ipfs/kubo/releases/download/v0.34.1/kubo_v0.34.1_linux-amd64.tar.gz
+
+tar -xvzf kubo_v0.34.1_linux-amd64.tar.gz
+
+cd kubo
+sudo bash install.sh
+
+ipfs init
+
+sudo apt install ufw
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow 4001/tcp
+sudo ufw allow 8080/tcp
+sudo ufw allow 22/tcp
+sudo ufw allow 5001/tcp
+sudo ufw enable
+sudo ufw status
+
+
+
 
 # Clone the MCP server repository
 git clone https://github.com/AleksanStark/mcp-ipfs-server.git
@@ -82,6 +103,7 @@ npm install
 
 # Build the project
 npm run build
+ipfs daemon
 ```
 
 ### Usage
