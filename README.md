@@ -100,7 +100,8 @@ cd mcp-ipfs-server
 
 # Install dependencies
 npm install
-
+npm install @modelcontextprotocol/sdk zod
+npm install -D @types/node typescript
 # Build the project
 npm run build
 ipfs daemon
